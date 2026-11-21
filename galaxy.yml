@@ -1,0 +1,16 @@
+namespace: acme
+name: transfer
+version: 1.0.0
+readme: README.md
+authors:
+  - "sthiriet"
+license:
+  - MIT
+tags:
+  - infrastructure
+  - tools
+  - files
+description: "Transferts de fichiers entre serveurs gérés, streamés via le contrôleur."
+repository: "https://github.com/sthiriet/ansible-collection-transfer"
+homepage: "https://github.com/sthiriet/ansible-collection-transfer"
+issues: "https://github.com/sthiriet/ansible-collection-transfer/issues"
