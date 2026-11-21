@@ -1,0 +1,9 @@
+namespace: acme
+name: transfer
+version: 1.0.0
+readme: README.md
+authors:
+  - "acme.transfer"
+license:
+  - MIT
+description: "Transferts de fichiers entre serveurs gérés, streamés via le contrôleur."
