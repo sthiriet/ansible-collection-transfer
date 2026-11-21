@@ -11,8 +11,8 @@ short_description: Copie un fichier ou un répertoire d'un serveur à un autre, 
 description:
   - Copie un fichier ou un répertoire depuis un serveur géré vers un autre
     serveur géré, en une seule tâche.
-  - Les données sont streamées à travers le contrôleur (pipe en RAM) :
-    aucun fichier temporaire n'est écrit sur le contrôleur, le débit limite
+  - Les données sont streamées à travers le contrôleur via un pipe en RAM.
+    Aucun fichier temporaire n'est écrit sur le contrôleur. Le débit limite
     devient max(débit source->contrôleur, débit contrôleur->destination)
     au lieu de la somme des deux.
   - Aucun paquet à installer sur les cibles (sh, coreutils, sshd suffisent).
@@ -63,10 +63,10 @@ options:
     type: bool
     default: true
 notes:
-  - become sans mot de passe uniquement (sudo -n / su / doas) : la connexion
-    ssh est non interactive.
-  - Pour les répertoires, les droits du tar sont préservés pour le \'mode\',
-    appliqué récursivement s'il est précisé ; owner/group s'appliquent à
+  - become sans mot de passe uniquement (sudo -n / su / doas). La connexion
+    SSH est non interactive.
+  - Pour les répertoires, les droits du tar sont préservés. Le 'mode' est
+    appliqué récursivement s'il est précisé. owner/group s'appliquent à
     l'arbre entier (sémantique chown -R de M(ansible.builtin.copy)).
 seealso:
   - module: ansible.builtin.copy

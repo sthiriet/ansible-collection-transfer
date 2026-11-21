@@ -1,5 +1,6 @@
 ---
-- hosts: localhost
+- name: Copie serveur à serveur via le contrôleur (smoke)
+  hosts: localhost
   connection: local
   gather_facts: false
   vars:
@@ -7,12 +8,12 @@
     content: "hello copy_between\n"
 
   tasks:
-    - name: reset zone de test
+    - name: Reset zone de test
       ansible.builtin.file:
         path: "{{ base }}"
         state: absent
 
-    - name: setup source (fichier + arbre)
+    - name: Setup source (fichier + arbre)
       ansible.builtin.shell: |
         set -e
         mkdir -p "{{ base }}/src/tree/sub"
@@ -20,10 +21,11 @@
         echo a > "{{ base }}/src/tree/a.txt"
         echo b > "{{ base }}/src/tree/sub/b.txt"
         chmod 0755 "{{ base }}/src/tree"
+      changed_when: false
 
     # ---------------------------------------------------------------- fichier
 
-    - name: copie fichier src -> dst
+    - name: Copie fichier src -> dst
       acme.transfer.copy_between:
         src_host: cb_src
         src: "{{ base }}/src/src_file.txt"
@@ -32,27 +34,27 @@
         mode: "0640"
       register: r_file
 
-    - name: assert fichier
+    - name: Assert fichier
       ansible.builtin.assert:
         that:
           - r_file.changed
           - r_file.src_checksum | length == 64
 
-    - name: stat dest fichier
+    - name: Stat dest fichier
       ansible.builtin.stat:
         path: "{{ base }}/dst/nested/data.txt"
         get_checksum: true
         checksum_algorithm: sha256
       register: s_file
 
-    - name: assert attribus et contenu
+    - name: Assert attribus et contenu
       ansible.builtin.assert:
         that:
           - s_file.stat.exists
           - s_file.stat.mode == '0640'
           - s_file.stat.checksum == r_file.src_checksum
 
-    - name: re-copie identique (idempotence)
+    - name: Re-copie identique (idempotence)
       acme.transfer.copy_between:
         src_host: cb_src
         src: "{{ base }}/src/src_file.txt"
@@ -61,12 +63,12 @@
         mode: "0640"
       register: r_file2
 
-    - name: assert idempotence
+    - name: Assert idempotence
       ansible.builtin.assert:
         that:
           - not r_file2.changed
 
-    - name: check mode (sans transfert)
+    - name: Check mode (sans transfert)
       acme.transfer.copy_between:
         src_host: cb_src
         src: "{{ base }}/src/src_file.txt"
@@ -75,45 +77,48 @@
       register: r_check
       check_mode: true
 
-    - name: assert check mode ne cree rien
+    - name: Assert check mode ne cree rien
       ansible.builtin.assert:
         that:
           - r_check.changed
           - r_check is not failed
 
-    - name: rien d'ecrit en check mode
+    - name: Rien d'ecrit en check mode
       ansible.builtin.stat:
         path: "{{ base }}/dst/nested/absent.txt"
       register: s_check
 
-    - name: assert absent
+    - name: Assert absent
       ansible.builtin.assert:
         that: not s_check.stat.exists
 
     # ---------------------------------------------------------------- dossier
 
-    - name: pre-cree la destination repertoire (clobber attendu)
+    - name: Pre-cree la destination repertoire (clobber attendu)
       ansible.builtin.file:
         path: "{{ base }}/dst/tree"
         state: directory
+        mode: "0755"
 
-    - name: copie dossier sans backup doit echouer
+    - name: Copie dossier sans backup doit echouer
       block:
-        - acme.transfer.copy_between:
+        - name: Copie qui doit echouer
+          acme.transfer.copy_between:
             src_host: cb_src
             src: "{{ base }}/src/tree"
             dest_host: cb_dst
             dest: "{{ base }}/dst/tree"
-        - ansible.builtin.fail:
+        - name: L'operation aurait du echouer
+          ansible.builtin.fail:
             msg: "l'operation aurait du echouer"
       rescue:
-        - name: c'est bien le refus d'ecrasement
+        - name: C'est bien le refus d'ecrasement
           ansible.builtin.assert:
             that:
-              - (ansible_failed_task.name != "l'operation aurait du echouer")
+              - (ansible_failed_task.name != "L'operation aurait du echouer")
               - ansible_failed_result.msg is search('existe déjà')
 
-    - name: copie dossier avec backup
+    - name: Copie dossier avec backup
       acme.transfer.copy_between:
         src_host: cb_src
         src: "{{ base }}/src/tree"
@@ -122,20 +127,20 @@
         backup: true
       register: r_dir
 
-    - name: assert copie dossier
+    - name: Assert copie dossier
       ansible.builtin.assert:
         that: r_dir.changed
 
-    - name: backup deplace
+    - name: Backup deplace
       ansible.builtin.stat:
         path: "{{ base }}/dst/tree.cbw_bak"
       register: s_bak
 
-    - name: assert backup present
+    - name: Assert backup present
       ansible.builtin.assert:
         that: s_bak.stat.exists
 
-    - name: re-copie dossier identique (idempotence)
+    - name: Re-copie dossier identique (idempotence)
       acme.transfer.copy_between:
         src_host: cb_src
         src: "{{ base }}/src/tree"
@@ -143,16 +148,16 @@
         dest: "{{ base }}/dst/tree"
       register: r_dir2
 
-    - name: assert idempotence dossier
+    - name: Assert idempotence dossier
       ansible.builtin.assert:
         that:
           - not r_dir2.changed
 
-    - name: contenu arbre copie
+    - name: Contenu arbre copie
       ansible.builtin.stat:
         path: "{{ base }}/dst/tree/sub/b.txt"
       register: s_sub
 
-    - name: assert fichier imbrique present
+    - name: Assert fichier imbrique present
       ansible.builtin.assert:
         that: s_sub.stat.exists

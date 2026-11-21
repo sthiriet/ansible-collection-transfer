@@ -1,0 +1,32 @@
+---
+name: CI
+
+on:
+  push:
+    branches-ignore: []
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ansible tooling
+        run: python -m pip install ansible-core ansible-lint
+
+      - name: Map collection into collections path
+        run: |
+          mkdir -p "$HOME/collections/ansible_collections/acme"
+          ln -s "$GITHUB_WORKSPACE" "$HOME/collections/ansible_collections/acme/transfer"
+          echo "ANSIBLE_COLLECTIONS_PATH=$HOME/collections" >> "$GITHUB_ENV"
+
+      - name: Lint
+        run: ansible-lint
+
+      - name: Smoke test
+        run: ansible-playbook -i tests/inventory.ini tests/smoke.yml
